@@ -57,13 +57,21 @@ const S={token:localStorage.getItem('lb_token'),user:jget('lb_user',null),cfg:jg
 const ref=new URLSearchParams(location.search).get('ref');
 if(ref) localStorage.setItem('lb_ref',ref.slice(0,20));
 
-async function api(action,data={}){
+async function api(action,data={},coba=0){
+  let txt='',j=null;
   try{
     const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data,token:S.token})});
-    const j=await r.json();
-    if(j.sesiHabis){logout(true)}
-    return j;
-  }catch(e){return{success:false,message:'Tidak bisa terhubung ke server. Periksa koneksi internet.'}}
+    txt=await r.text();
+    j=JSON.parse(txt);
+  }catch(e){
+    // permintaan baca aman diulang otomatis sekali
+    if(coba<1&&/^(getPengaturan|me|adminDaftarUser)$/.test(action)){await new Promise(r=>setTimeout(r,1200));return api(action,data,coba+1)}
+    const detail=txt?'respons server tidak valid: '+txt.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,140):e.message;
+    console.error('API error',action,e,txt.slice(0,300));
+    return{success:false,message:'Gagal menghubungi server ('+detail+')'}
+  }
+  if(j.sesiHabis)logout(true);
+  return j;
 }
 function toast(m,ok=true){const t=$('toast');t.textContent=m;t.className='fixed left-1/2 -translate-x-1/2 bottom-24 z-50 max-w-[90vw] px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg '+(ok?'bg-emerald-600':'bg-rose-600');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.add('hidden'),3500)}
 function modal(html){$('modalBox').innerHTML='<button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 text-xl" aria-label="Tutup">✕</button>'+html;$('modal').classList.remove('hidden')}
