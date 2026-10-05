@@ -95,7 +95,7 @@ function renderHeader(){
     :`<button onclick="showLogin()" class="btn bg-gold text-navy-dark">Masuk</button>`;
 }
 function go(v){S.view=(v==='dash'&&!S.user)?'home':v;if(v==='dash'&&!S.user){showLogin();}render();scrollTo(0,0)}
-function render(){renderHeader();$('main').innerHTML=S.view==='dash'&&S.user?dashHtml():homeHtml();if(S.view==='dash'&&S.user&&S.user.role==='Admin')loadAdmin()}
+function render(){renderHeader();$('main').innerHTML=S.view==='dash'&&S.user?dashHtml():homeHtml();if(S.view==='dash'&&S.user&&S.user.role==='Admin')loadAdmin();if(window.T2)T2.after()}
 
 function homeHtml(){return `
 <section class="rounded-3xl bg-navy text-white p-6 sm:p-10 border border-gold/40 relative overflow-hidden">
@@ -115,7 +115,7 @@ function homeHtml(){return `
 </section>
 <section class="mt-6 bg-white rounded-2xl border border-slate-200 p-5">
   <h2 class="font-bold text-navy text-lg">Paket keberangkatan</h2>
-  <p class="text-sm text-slate-500 mt-1">Katalog paket akan tampil di sini pada tahap berikutnya.</p>
+  <div id="katalog" class="mt-3"><p class="text-sm text-slate-500">Memuat paket...</p></div>
 </section>`}
 
 // ====== LOGIN & REGISTER ======
@@ -169,10 +169,12 @@ function dashHtml(){
     <h2 class="text-xl font-bold">Assalamu'alaikum, ${esc(u.nama)}</h2>
     <p class="text-xs text-slate-300 mt-1">${esc(u.role)} · ${esc(u.noWa)}</p></section>`;
   if(u.role==='Admin')return head+`
-  <div class="mt-4 flex gap-2" role="tablist">
+  <div class="mt-4 flex flex-wrap gap-2" role="tablist">
     <button onclick="S.tab='users';render()" class="btn ${S.tab==='users'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengguna</button>
+    <button onclick="S.tab='paket';render()" class="btn ${S.tab==='paket'?'bg-navy text-white':'bg-white border border-slate-300'}">Paket</button>
     <button onclick="S.tab='cfg';render()" class="btn ${S.tab==='cfg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengaturan dan logo</button>
   </div><div id="adminBody" class="mt-4">${S.tab==='cfg'?cfgHtml():'<p class="text-sm text-slate-500">Memuat data pengguna...</p>'}</div>`;
+  if(u.role==='Jamaah'&&window.T2)return head+'<div id="jamaahBody" class="mt-4"></div>';
   const steps=u.role==='Jamaah'?`<ol class="mt-4 space-y-2 text-sm">${['Isi formulir pendaftaran','Unggah KTP dan KK','Bayar DP atau lunas','Unggah paspor dan vaksin','Checklist Nusuk','Info kamar hotel'].map(t=>`<li class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-400"><span>🔒</span>${t}</li>`).join('')}</ol>`:'';
   return head+`<section class="mt-4 bg-white rounded-2xl border border-slate-200 p-5"><h3 class="font-bold text-navy">Sedang disiapkan</h3><p class="text-sm text-slate-600 mt-1">${ROLE_INFO[u.role]||''}</p>${steps}</section>`;
 }
@@ -234,5 +236,6 @@ applyCfg();render();
 api('getPengaturan').then(j=>{if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg();if(S.view==='dash'&&S.user&&S.user.role==='Admin'&&S.tab==='cfg')render()}});
 if(S.token)api('me').then(j=>{if(j.success){S.user=j.user;localStorage.setItem('lb_user',JSON.stringify(j.user));renderHeader()}});
 </script>
+<script src="tahap2.js"></script>
 </body>
 </html>
