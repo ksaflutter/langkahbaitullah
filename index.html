@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A8A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Langkah Baitullah</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#1E3A8A',dark:'#0F1F4D'},gold:{DEFAULT:'#D4AF37',dark:'#A8872A'}},fontFamily:{sans:['Plus Jakarta Sans','sans-serif'],arab:['Amiri','serif']}}}}
+</script>
+<style>
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.inp{width:100%;border:1px solid #cbd5e1;border-radius:.75rem;padding:.7rem .9rem;font-size:.875rem;background:#f8fafc}
+.inp:focus{outline:2px solid #1E3A8A;background:#fff}
+.btn{border-radius:.75rem;padding:.7rem 1.1rem;font-weight:700;font-size:.875rem;min-height:44px}
+.btn:focus-visible,.inp:focus-visible{outline:2px solid #D4AF37;outline-offset:2px}
+.btn:disabled{opacity:.6}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+<header class="bg-navy text-white sticky top-0 z-30 border-b-2 border-gold/60">
+  <div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+    <button onclick="go('home')" class="flex items-center gap-3 text-left">
+      <span class="w-10 h-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shrink-0 border border-gold">
+        <img id="logoImg" class="hidden w-full h-full object-contain" alt="Logo">
+        <svg id="logoSvg" viewBox="0 0 100 100" class="w-8 h-8"><path d="M20 40C20 15 80 15 80 35C80 50 40 45 40 55" fill="none" stroke="#D4AF37" stroke-width="18" stroke-linecap="round"/><path d="M80 60C80 85 20 85 20 65C20 50 60 55 60 45" fill="none" stroke="#1E3A8A" stroke-width="18" stroke-linecap="round"/></svg>
+      </span>
+      <span><b id="appName" class="block text-base leading-tight">Langkah Baitullah</b><span class="text-[11px] text-slate-300">by Sadar Group</span></span>
+    </button>
+    <div id="hdrBtns"></div>
+  </div>
+</header>
+
+<main id="main" class="max-w-5xl mx-auto p-4 pb-28"></main>
+
+<a id="waFab" class="hidden fixed right-4 bottom-5 z-20 w-14 h-14 rounded-full bg-emerald-500 text-white shadow-lg flex items-center justify-center text-2xl" target="_blank" rel="noopener" aria-label="Hubungi admin via WhatsApp">💬</a>
+
+<div id="modal" class="hidden fixed inset-0 z-40 bg-slate-900/60 flex items-end sm:items-center justify-center p-3">
+  <div id="modalBox" class="bg-white rounded-3xl w-full max-w-md p-6 max-h-[92vh] overflow-y-auto relative"></div>
+</div>
+<div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 z-50 max-w-[90vw] px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg"></div>
+
+<script>
+// ====== PENGATURAN: ganti jika URL deploy Apps Script berubah ======
+const API='https://script.google.com/macros/s/AKfycbybGI6RZ02i7Fk1W02xBXcZkBzgedtN9Y68Hf58BLNLAJZJ_WOtning79Cp4hqueUI/exec';
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jget=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const S={token:localStorage.getItem('lb_token'),user:jget('lb_user',null),cfg:jget('lb_cfg',{}),view:'home',tab:'users',users:[]};
+
+// simpan kode referral agen dari link ?ref=USR-xxx
+const ref=new URLSearchParams(location.search).get('ref');
+if(ref) localStorage.setItem('lb_ref',ref.slice(0,20));
+
+async function api(action,data={}){
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,data,token:S.token})});
+    const j=await r.json();
+    if(j.sesiHabis){logout(true)}
+    return j;
+  }catch(e){return{success:false,message:'Tidak bisa terhubung ke server. Periksa koneksi internet.'}}
+}
+function toast(m,ok=true){const t=$('toast');t.textContent=m;t.className='fixed left-1/2 -translate-x-1/2 bottom-24 z-50 max-w-[90vw] px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg '+(ok?'bg-emerald-600':'bg-rose-600');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.add('hidden'),3500)}
+function modal(html){$('modalBox').innerHTML='<button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 text-xl" aria-label="Tutup">✕</button>'+html;$('modal').classList.remove('hidden')}
+function closeModal(){$('modal').classList.add('hidden')}
+async function busy(btn,fn){const t=btn.textContent;btn.disabled=true;btn.textContent='Memproses...';try{await fn()}finally{btn.disabled=false;btn.textContent=t}}
+
+// ====== TAMPILAN UMUM ======
+function applyCfg(){
+  const c=S.cfg;
+  $('appName').textContent=c.nama_app||'Langkah Baitullah';
+  document.title=c.nama_app||'Langkah Baitullah';
+  const has=!!c.logo_url;
+  $('logoImg').classList.toggle('hidden',!has);$('logoSvg').classList.toggle('hidden',has);
+  if(has)$('logoImg').src=c.logo_url;
+  const wa=String(c.kontak_wa||'').replace(/\D/g,'').replace(/^0/,'62');
+  const f=$('waFab');if(wa){f.href='https://wa.me/'+wa;f.classList.remove('hidden')}
+}
+function renderHeader(){
+  $('hdrBtns').innerHTML=S.user
+    ?`<button onclick="go('dash')" class="btn bg-white/10 border border-white/30 text-white mr-1">Dashboard</button><button onclick="logout()" class="btn bg-rose-600 text-white">Keluar</button>`
+    :`<button onclick="showLogin()" class="btn bg-gold text-navy-dark">Masuk</button>`;
+}
+function go(v){S.view=(v==='dash'&&!S.user)?'home':v;if(v==='dash'&&!S.user){showLogin();}render();scrollTo(0,0)}
+function render(){renderHeader();$('main').innerHTML=S.view==='dash'&&S.user?dashHtml():homeHtml();if(S.view==='dash'&&S.user&&S.user.role==='Admin')loadAdmin()}
+
+function homeHtml(){return `
+<section class="rounded-3xl bg-navy text-white p-6 sm:p-10 border border-gold/40 relative overflow-hidden">
+  <p class="font-arab text-gold text-3xl sm:text-5xl leading-relaxed" dir="rtl" lang="ar">لَبَّيْكَ اللَّهُمَّ لَبَّيْكَ</p>
+  <h1 class="text-2xl sm:text-4xl font-extrabold mt-3 max-w-xl leading-tight">Satu aplikasi untuk seluruh perjalanan Umroh dan Haji Anda</h1>
+  <p class="text-slate-300 text-sm mt-3 max-w-lg">Daftar, lengkapi berkas, pantau keberangkatan, dan terima kabar dari pembimbing tanpa ribet.</p>
+  <div class="mt-6 flex flex-wrap gap-3">
+    ${S.user?`<button onclick="go('dash')" class="btn bg-gold text-navy-dark">Buka dashboard</button>`
+    :`<button onclick="showRegister('Jamaah')" class="btn bg-gold text-navy-dark">Daftar sebagai jamaah</button><button onclick="showLogin()" class="btn bg-white/10 border border-white/30">Saya sudah punya akun</button>`}
+  </div>
+</section>
+<section class="mt-6 bg-white rounded-2xl border border-slate-200 p-5">
+  <h2 class="font-bold text-navy text-lg">Alur pendaftaran jamaah</h2>
+  <ol class="mt-3 grid sm:grid-cols-5 gap-3 text-sm">
+    ${['Buat akun','Isi formulir','Unggah KTP dan KK','Bayar DP atau lunas','Unggah paspor dan vaksin'].map((t,i)=>`<li class="rounded-xl bg-slate-50 border border-slate-200 p-3"><span class="text-gold-dark font-extrabold">${i+1}.</span> ${t}</li>`).join('')}
+  </ol>
+</section>
+<section class="mt-6 bg-white rounded-2xl border border-slate-200 p-5">
+  <h2 class="font-bold text-navy text-lg">Paket keberangkatan</h2>
+  <p class="text-sm text-slate-500 mt-1">Katalog paket akan tampil di sini pada tahap berikutnya.</p>
+</section>`}
+
+// ====== LOGIN & REGISTER ======
+function showLogin(){modal(`
+<h3 class="text-xl font-extrabold text-navy">Masuk</h3><p class="text-xs text-slate-500 mb-4">Gunakan nomor WhatsApp dan PIN 6 angka.</p>
+<form onsubmit="doLogin(event)" class="space-y-3">
+<label class="block text-xs font-bold">Nomor WhatsApp<input id="lWa" type="tel" inputmode="numeric" class="inp mt-1" placeholder="08123456789" required></label>
+<label class="block text-xs font-bold">PIN<input id="lPin" type="password" inputmode="numeric" maxlength="6" class="inp mt-1" placeholder="6 angka" required></label>
+<button class="btn bg-navy text-white w-full">Masuk</button></form>
+<p class="text-xs text-center mt-4">Belum punya akun? <button class="font-bold text-navy underline" onclick="showRegister('Jamaah')">Daftar</button></p>`)}
+
+function showRegister(role){modal(`
+<h3 class="text-xl font-extrabold text-navy">Buat akun</h3><p class="text-xs text-slate-500 mb-4">Pilih peran sesuai kebutuhan Anda.</p>
+<form onsubmit="doRegister(event)" class="space-y-3">
+<label class="block text-xs font-bold">Nama lengkap<input id="rNama" class="inp mt-1" required></label>
+<label class="block text-xs font-bold">Nomor WhatsApp<input id="rWa" type="tel" inputmode="numeric" class="inp mt-1" placeholder="08123456789" required></label>
+<label class="block text-xs font-bold">PIN (6 angka)<input id="rPin" type="password" inputmode="numeric" maxlength="6" pattern="\\d{6}" class="inp mt-1" required></label>
+<label class="block text-xs font-bold">Daftar sebagai
+<select id="rRole" class="inp mt-1" onchange="$('rInfo').classList.toggle('hidden',this.value==='Jamaah')">
+${['Jamaah','Agen','Muthawwif','Team Leader','Pelaksana Badal'].map(r=>`<option ${r===role?'selected':''}>${r}</option>`).join('')}</select></label>
+<p id="rInfo" class="hidden text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3">Akun selain jamaah aktif setelah disetujui admin.</p>
+<button class="btn bg-gold text-navy-dark w-full">Daftar</button></form>
+<p class="text-xs text-center mt-4">Sudah punya akun? <button class="font-bold text-navy underline" onclick="showLogin()">Masuk</button></p>`)}
+
+function setSession(j){S.token=j.token;S.user=j.user;localStorage.setItem('lb_token',j.token);localStorage.setItem('lb_user',JSON.stringify(j.user))}
+async function doLogin(e){e.preventDefault();await busy(e.submitter,async()=>{
+  const j=await api('login',{noWa:$('lWa').value,pin:$('lPin').value});
+  if(!j.success)return toast(j.message,false);
+  setSession(j);closeModal();toast('Selamat datang, '+j.user.nama);go('dash')})}
+async function doRegister(e){e.preventDefault();await busy(e.submitter,async()=>{
+  const j=await api('register',{nama:$('rNama').value,noWa:$('rWa').value,pin:$('rPin').value,role:$('rRole').value});
+  if(!j.success)return toast(j.message,false);
+  closeModal();toast(j.message);
+  if(j.token){setSession(j);go('dash')}})}
+function logout(silent){
+  if(S.token&&!silent)api('logout');
+  S.token=null;S.user=null;localStorage.removeItem('lb_token');localStorage.removeItem('lb_user');
+  S.view='home';render();if(!silent)toast('Anda sudah keluar')}
+
+// ====== DASHBOARD ======
+const ROLE_INFO={
+ 'Jamaah':'Formulir pendaftaran, unggah berkas, pembayaran, dan info kamar akan tersedia di tahap berikutnya.',
+ 'Agen':'Link referral, daftar jamaah binaan, dan estimasi komisi akan tersedia di tahap berikutnya.',
+ 'Muthawwif':'Absensi rombongan, pengumuman, dan penerimaan SOS akan tersedia di tahap berikutnya.',
+ 'Team Leader':'Pengelolaan rombongan, manasik, kamar, dan SOS akan tersedia di tahap berikutnya.',
+ 'Pelaksana Badal':'Tugas badal serta unggah foto dan video bukti akan tersedia di tahap berikutnya.'};
+
+function dashHtml(){
+  const u=S.user;
+  const head=`<section class="rounded-2xl bg-navy text-white p-5 border-l-4 border-gold">
+    <h2 class="text-xl font-bold">Assalamu'alaikum, ${esc(u.nama)}</h2>
+    <p class="text-xs text-slate-300 mt-1">${esc(u.role)} · ${esc(u.noWa)}</p></section>`;
+  if(u.role==='Admin')return head+`
+  <div class="mt-4 flex gap-2" role="tablist">
+    <button onclick="S.tab='users';render()" class="btn ${S.tab==='users'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengguna</button>
+    <button onclick="S.tab='cfg';render()" class="btn ${S.tab==='cfg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengaturan dan logo</button>
+  </div><div id="adminBody" class="mt-4">${S.tab==='cfg'?cfgHtml():'<p class="text-sm text-slate-500">Memuat data pengguna...</p>'}</div>`;
+  const steps=u.role==='Jamaah'?`<ol class="mt-4 space-y-2 text-sm">${['Isi formulir pendaftaran','Unggah KTP dan KK','Bayar DP atau lunas','Unggah paspor dan vaksin','Checklist Nusuk','Info kamar hotel'].map(t=>`<li class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-400"><span>🔒</span>${t}</li>`).join('')}</ol>`:'';
+  return head+`<section class="mt-4 bg-white rounded-2xl border border-slate-200 p-5"><h3 class="font-bold text-navy">Sedang disiapkan</h3><p class="text-sm text-slate-600 mt-1">${ROLE_INFO[u.role]||''}</p>${steps}</section>`;
+}
+
+// ====== ADMIN ======
+async function loadAdmin(){
+  if(S.tab!=='users')return;
+  const j=await api('adminDaftarUser');
+  if(!j.success){if($('adminBody'))$('adminBody').innerHTML=`<p class="text-sm text-rose-600">${esc(j.message)}</p>`;return}
+  S.users=j.users;renderUsers();
+}
+function renderUsers(){
+  const el=$('adminBody');if(!el||S.tab!=='users')return;
+  const order={Menunggu:0,Aktif:1,Nonaktif:2};
+  const list=[...S.users].sort((a,b)=>order[a.status]-order[b.status]);
+  const pend=list.filter(x=>x.status==='Menunggu').length;
+  const act=(u)=>u.userId===S.user.userId?'<span class="text-xs text-slate-400">Akun Anda</span>':
+    u.status==='Menunggu'?`<button onclick="setStatus('${u.userId}','Aktif')" class="btn !min-h-0 !py-1.5 bg-emerald-600 text-white">Setujui</button> <button onclick="setStatus('${u.userId}','Nonaktif')" class="btn !min-h-0 !py-1.5 bg-slate-200">Tolak</button>`:
+    u.status==='Aktif'?`<button onclick="setStatus('${u.userId}','Nonaktif')" class="btn !min-h-0 !py-1.5 bg-slate-200">Nonaktifkan</button>`:
+    `<button onclick="setStatus('${u.userId}','Aktif')" class="btn !min-h-0 !py-1.5 bg-emerald-600 text-white">Aktifkan</button>`;
+  const badge=s=>`<span class="px-2 py-0.5 rounded-full text-xs font-bold ${s==='Aktif'?'bg-emerald-100 text-emerald-700':s==='Menunggu'?'bg-amber-100 text-amber-800':'bg-slate-200 text-slate-600'}">${s}</span>`;
+  el.innerHTML=`<p class="text-sm mb-3">${pend?`<b class="text-amber-700">${pend} akun menunggu persetujuan.</b>`:'Tidak ada akun yang menunggu persetujuan.'}</p>
+  <div class="space-y-2">${list.map(u=>`<div class="bg-white border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+    <div><p class="font-bold text-sm">${esc(u.nama)} ${badge(u.status)}</p><p class="text-xs text-slate-500">${esc(u.role)} · ${esc(u.noWa)} · ${esc(u.userId)}</p></div><div>${act(u)}</div></div>`).join('')}</div>`;
+}
+async function setStatus(id,status){
+  const j=await api('adminUbahStatus',{userId:id,status});
+  toast(j.message,j.success);if(j.success)loadAdmin()}
+
+function cfgHtml(){const c=S.cfg;return `<form onsubmit="saveCfg(event)" class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 max-w-md">
+  <label class="block text-xs font-bold">Nama aplikasi<input id="cNama" class="inp mt-1" value="${esc(c.nama_app||'')}"></label>
+  <label class="block text-xs font-bold">WhatsApp admin (tombol bantuan)<input id="cWa" class="inp mt-1" value="${esc(c.kontak_wa||'')}"></label>
+  <button class="btn bg-navy text-white w-full">Simpan pengaturan</button></form>
+  <div class="bg-white border border-slate-200 rounded-2xl p-5 mt-4 max-w-md">
+  <p class="text-xs font-bold mb-2">Logo aplikasi</p>
+  <div class="w-20 h-20 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden mb-3">${c.logo_url?`<img src="${esc(c.logo_url)}" class="w-full h-full object-contain" alt="Logo saat ini">`:'<span class="text-xs text-slate-400">Belum ada</span>'}</div>
+  <input id="cLogo" type="file" accept="image/png,image/jpeg,image/webp" class="inp" onchange="uploadLogo(this)">
+  <p class="text-[11px] text-slate-500 mt-2">Gambar dikecilkan otomatis sebelum diunggah. Disarankan logo persegi dengan latar transparan (PNG).</p></div>`}
+async function saveCfg(e){e.preventDefault();await busy(e.submitter,async()=>{
+  const j=await api('adminSimpanPengaturan',{nama_app:$('cNama').value,kontak_wa:$('cWa').value});
+  toast(j.message,j.success);if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg()}})}
+
+function kompres(file,max,cb){
+  const r=new FileReader();
+  r.onload=e=>{const i=new Image();i.onload=()=>{
+    const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');
+    c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);
+    cb(c.toDataURL('image/png'),'image/png')};i.src=e.target.result};
+  r.readAsDataURL(file)}
+function uploadLogo(inp){
+  const f=inp.files[0];if(!f)return;toast('Mengunggah logo...');
+  kompres(f,512,async(b64,mime)=>{
+    const j=await api('adminUploadLogo',{base64:b64,mimeType:mime});
+    toast(j.message,j.success);
+    if(j.success){S.cfg.logo_url=j.logoUrl;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg();render()}})}
+
+// ====== MULAI ======
+applyCfg();render();
+api('getPengaturan').then(j=>{if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg();if(S.view==='dash'&&S.user&&S.user.role==='Admin'&&S.tab==='cfg')render()}});
+if(S.token)api('me').then(j=>{if(j.success){S.user=j.user;localStorage.setItem('lb_user',JSON.stringify(j.user));renderHeader()}});
+</script>
+</body>
+</html>
