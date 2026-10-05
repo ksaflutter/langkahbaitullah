@@ -30,13 +30,14 @@ async function after(){
   if(S.view==='home'&&$('katalog')){await muat();if($('katalog'))$('katalog').innerHTML=grid()}
   else if(S.view==='dash'&&S.user){
     if(S.user.role==='Jamaah'&&$('jamaahBody'))jamaahDash();
-    if(S.user.role==='Admin'&&S.tab==='paket'&&$('adminBody'))adminPaket()}}
+    if(S.user.role==='Admin'&&S.tab==='paket'&&$('adminBody'))adminPaket();
+    if(S.user.role==='Admin'&&S.tab==='reg'&&$('adminBody')&&window.T2B)T2B.admin()}}
 
 async function jamaahDash(){
   const b=$('jamaahBody');b.innerHTML='<p class="text-sm text-slate-500">Memuat...</p>';
   const [,s]=await Promise.all([muat(),api('jamaahStatus')]);
   if(!$('jamaahBody'))return;
-  if(s.success&&s.pendaftaran)return $('jamaahBody').innerHTML=statusHtml(s);
+  if(s.success&&s.pendaftaran)return window.T2B?T2B.dash(s):($('jamaahBody').innerHTML=statusHtml(s));
   const pend=localStorage.getItem('lb_paket');
   if(pend&&paket.find(p=>p.id===pend))return form(pend);
   $('jamaahBody').innerHTML=`<h3 class="font-bold text-navy text-lg mb-3">Pilih paket keberangkatan</h3>`+grid()}
