@@ -171,6 +171,7 @@ function dashHtml(){
   if(u.role==='Admin')return head+`
   <div class="mt-4 flex flex-wrap gap-2" role="tablist">
     <button onclick="S.tab='users';render()" class="btn ${S.tab==='users'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengguna</button>
+    <button onclick="S.tab='reg';render()" class="btn ${S.tab==='reg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pendaftar</button>
     <button onclick="S.tab='paket';render()" class="btn ${S.tab==='paket'?'bg-navy text-white':'bg-white border border-slate-300'}">Paket</button>
     <button onclick="S.tab='cfg';render()" class="btn ${S.tab==='cfg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengaturan dan logo</button>
   </div><div id="adminBody" class="mt-4">${S.tab==='cfg'?cfgHtml():'<p class="text-sm text-slate-500">Memuat data pengguna...</p>'}</div>`;
@@ -207,6 +208,7 @@ async function setStatus(id,status){
 function cfgHtml(){const c=S.cfg;return `<form onsubmit="saveCfg(event)" class="bg-white border border-slate-200 rounded-2xl p-5 space-y-3 max-w-md">
   <label class="block text-xs font-bold">Nama aplikasi<input id="cNama" class="inp mt-1" value="${esc(c.nama_app||'')}"></label>
   <label class="block text-xs font-bold">WhatsApp admin (tombol bantuan)<input id="cWa" class="inp mt-1" value="${esc(c.kontak_wa||'')}"></label>
+  <label class="block text-xs font-bold">Info rekening untuk transfer<textarea id="cRek" rows="3" class="inp mt-1" placeholder="Bank, nomor rekening, atas nama">${esc(c.info_rekening||'')}</textarea></label>
   <button class="btn bg-navy text-white w-full">Simpan pengaturan</button></form>
   <div class="bg-white border border-slate-200 rounded-2xl p-5 mt-4 max-w-md">
   <p class="text-xs font-bold mb-2">Logo aplikasi</p>
@@ -214,7 +216,7 @@ function cfgHtml(){const c=S.cfg;return `<form onsubmit="saveCfg(event)" class="
   <input id="cLogo" type="file" accept="image/png,image/jpeg,image/webp" class="inp" onchange="uploadLogo(this)">
   <p class="text-[11px] text-slate-500 mt-2">Gambar dikecilkan otomatis sebelum diunggah. Disarankan logo persegi dengan latar transparan (PNG).</p></div>`}
 async function saveCfg(e){e.preventDefault();await busy(e.submitter,async()=>{
-  const j=await api('adminSimpanPengaturan',{nama_app:$('cNama').value,kontak_wa:$('cWa').value});
+  const j=await api('adminSimpanPengaturan',{nama_app:$('cNama').value,kontak_wa:$('cWa').value,info_rekening:$('cRek').value});
   toast(j.message,j.success);if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg()}})}
 
 function kompres(file,max,cb){
@@ -236,6 +238,7 @@ applyCfg();render();
 api('getPengaturan').then(j=>{if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg();if(S.view==='dash'&&S.user&&S.user.role==='Admin'&&S.tab==='cfg')render()}});
 if(S.token)api('me').then(j=>{if(j.success){S.user=j.user;localStorage.setItem('lb_user',JSON.stringify(j.user));renderHeader()}});
 </script>
+<script src="tahap2b.js"></script>
 <script src="tahap2.js"></script>
 </body>
 </html>
