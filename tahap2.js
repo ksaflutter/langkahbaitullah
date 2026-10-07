@@ -37,6 +37,7 @@ async function jamaahDash(){
   const b=$('jamaahBody');b.innerHTML='<p class="text-sm text-slate-500">Memuat...</p>';
   const [,s]=await Promise.all([muat(),api('jamaahStatus')]);
   if(!$('jamaahBody'))return;
+  if(!s.success)return $('jamaahBody').innerHTML=`<div class="bg-white rounded-2xl border border-rose-200 p-5"><p class="text-sm text-rose-600">${esc(s.message)}</p><button onclick="T2.jamaahDash()" class="btn bg-navy text-white mt-3">Coba lagi</button></div>`;
   if(s.success&&s.pendaftaran)return window.T2B?T2B.dash(s):($('jamaahBody').innerHTML=statusHtml(s));
   const pend=localStorage.getItem('lb_paket');
   if(pend&&paket.find(p=>p.id===pend))return form(pend);
