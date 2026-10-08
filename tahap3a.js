@@ -19,7 +19,7 @@ async function admin(){
 function draw(){
   const b=$('adminBody');if(!b||S.tab!=='rom')return;
   b.innerHTML=`<button onclick="T3.form()" class="btn bg-gold text-navy-dark mb-3">+ Buat rombongan</button><div class="space-y-2">
-  ${adm.map(r=>`<button onclick="T3.buka('${r.id}')" class="w-full text-left bg-white border border-slate-200 rounded-xl p-3">
+  ${[...adm].sort((a,b)=>(a.status==='Selesai')-(b.status==='Selesai')).map(r=>`<button onclick="T3.buka('${r.id}')" class="w-full text-left bg-white border border-slate-200 rounded-xl p-3">
   <div class="flex justify-between gap-2"><b class="text-sm">${esc(r.nama)}</b><span class="text-xs text-slate-500">${esc(r.status)}</span></div>
   <p class="text-xs text-slate-500">${esc(r.paket)} · ${esc(r.tgl)} · ${r.anggota.length} jamaah</p>
   <p class="text-xs">TL: ${r.tl?esc(r.tl.nama):'-'} · Muthawwif: ${r.mut?esc(r.mut.nama):'-'}</p></button>`).join('')||'<p class="text-sm text-slate-500">Belum ada rombongan. Klik Buat rombongan.</p>'}</div>`}
@@ -30,6 +30,7 @@ function buka(id){
   <p class="text-sm">Team Leader: ${kontak(r.tl)}<br>Muthawwif: ${kontak(r.mut)}</p>
   <div class="grid gap-2 mt-4"><button onclick="T3.anggota('${id}')" class="btn bg-navy text-white">Atur anggota (${r.anggota.length})</button>
   <button onclick="T3.kamarModal('${id}')" class="btn bg-gold text-navy-dark">Kamar hotel (${r.kamar.length})</button>
+  <button onclick="T3B.pengumuman('${id}')" class="btn bg-slate-200">Pengumuman dan tanda baca</button>
   <button onclick="T3.form('${id}')" class="btn bg-slate-200">Ubah data rombongan</button></div>`)}
 
 function form(id){
@@ -96,16 +97,19 @@ async function staf(){
   const j=await muatStaf();if(!$('stafBody'))return;
   if(!j.success){b.innerHTML=`<p class="text-sm text-rose-600">${esc(j.message)}</p>`;return}
   drawStaf()}
-function drawStaf(){
-  const b=$('stafBody');if(!b)return;const tl=S.user.role==='Team Leader';
-  b.innerHTML=stafList.map(r=>`<section class="bg-white rounded-2xl border border-slate-200 p-5 mb-4"><h3 class="font-bold text-navy">${esc(r.nama)}</h3>
-  <p class="text-xs text-slate-500">${esc(r.paket)} · berangkat ${esc(r.tgl)} · ${r.anggota.length} jamaah</p>
+const kartuStaf=(r,tl)=>`<section class="bg-white rounded-2xl border border-slate-200 p-5 mb-4"><div class="flex items-start justify-between gap-2"><div><h3 class="font-bold text-navy">${esc(r.nama)}</h3>
+  <p class="text-xs text-slate-500">${esc(r.paket)} · berangkat ${esc(r.tgl)} · ${r.anggota.length} jamaah</p></div>
+  ${r.status==='Selesai'?'':`<button onclick="T3B.pengumuman('${r.id}')" class="btn !min-h-0 !py-1.5 bg-navy text-white shrink-0">📣 Pengumuman</button>`}</div>
   <p class="text-xs mt-1">Team Leader: ${kontak(r.tl)} · Muthawwif: ${kontak(r.mut)}</p>
   <h4 class="font-bold text-sm mt-4 mb-2">Jamaah</h4><div>${r.anggota.map(a=>`<div class="flex items-center justify-between gap-2 text-sm border-b border-slate-100 py-1.5">
    <span>${esc(a.nama)} <span class="text-xs text-slate-400">${esc(a.tipe)}</span></span><span class="flex items-center gap-2">${bdgT(a.tahap)}<a href="${WA(a.hp)}" target="_blank" rel="noopener" class="text-lg" aria-label="WhatsApp ${esc(a.nama)}">💬</a></span></div>`).join('')||'<p class="text-xs text-slate-500">Belum ada anggota. Admin yang menempatkan jamaah ke rombongan.</p>'}</div>
-  <div class="flex items-center justify-between mt-4 mb-2"><h4 class="font-bold text-sm">Kamar hotel</h4>${tl?`<button onclick="T3.kamarModal('${r.id}')" class="btn !min-h-0 !py-1.5 bg-gold text-navy-dark">Kelola kamar</button>`:''}</div>
-  <div class="space-y-2">${r.kamar.map(k=>kamarCard(k,nm(r,k.penghuni))).join('')||'<p class="text-xs text-slate-500">Belum ada data kamar.</p>'}</div></section>`).join('')
-  ||'<p class="text-sm text-slate-500 bg-white rounded-2xl border border-slate-200 p-5">Belum ada rombongan yang ditugaskan kepada Anda. Hubungi admin.</p>'}
+  <div class="flex items-center justify-between mt-4 mb-2"><h4 class="font-bold text-sm">Kamar hotel</h4>${tl&&r.status!=='Selesai'?`<button onclick="T3.kamarModal('${r.id}')" class="btn !min-h-0 !py-1.5 bg-gold text-navy-dark">Kelola kamar</button>`:''}</div>
+  <div class="space-y-2">${r.kamar.map(k=>kamarCard(k,nm(r,k.penghuni))).join('')||'<p class="text-xs text-slate-500">Belum ada data kamar.</p>'}</div></section>`;
+function drawStaf(){
+  const b=$('stafBody');if(!b)return;const tl=S.user.role==='Team Leader';
+  const akt=stafList.filter(r=>r.status!=='Selesai'),sel=stafList.filter(r=>r.status==='Selesai');
+  b.innerHTML=(akt.map(r=>kartuStaf(r,tl)).join('')||'<p class="text-sm text-slate-500 bg-white rounded-2xl border border-slate-200 p-5 mb-4">Belum ada rombongan aktif yang ditugaskan kepada Anda. Hubungi admin.</p>')
+   +(sel.length?`<details class="mt-2"><summary class="text-sm font-bold text-slate-500 cursor-pointer py-2">Riwayat rombongan selesai (${sel.length})</summary>${sel.map(r=>kartuStaf(r,false)).join('')}</details>`:'')}
 
 // ===== JAMAAH: panel rombongan & kamar (dipanggil setelah checklist tampil) =====
 async function jamaah(){
