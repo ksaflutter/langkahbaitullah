@@ -27,6 +27,7 @@ function pilih(id){
   closeModal();go('dash')}
 
 async function after(){
+  if(window.T3B)T3B.sync();
   if(S.view==='home'&&$('katalog')){await muat();if($('katalog'))$('katalog').innerHTML=grid()}
   else if(S.view==='dash'&&S.user){
     if(S.user.role==='Jamaah'&&$('jamaahBody'))jamaahDash();
