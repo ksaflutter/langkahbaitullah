@@ -171,11 +171,13 @@ function dashHtml(){
   if(u.role==='Admin')return head+`
   <div class="mt-4 flex flex-wrap gap-2" role="tablist">
     <button onclick="S.tab='users';render()" class="btn ${S.tab==='users'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengguna</button>
+    <button onclick="S.tab='rom';render()" class="btn ${S.tab==='rom'?'bg-navy text-white':'bg-white border border-slate-300'}">Rombongan</button>
     <button onclick="S.tab='reg';render()" class="btn ${S.tab==='reg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pendaftar</button>
     <button onclick="S.tab='paket';render()" class="btn ${S.tab==='paket'?'bg-navy text-white':'bg-white border border-slate-300'}">Paket</button>
     <button onclick="S.tab='cfg';render()" class="btn ${S.tab==='cfg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengaturan dan logo</button>
   </div><div id="adminBody" class="mt-4">${S.tab==='cfg'?cfgHtml():'<p class="text-sm text-slate-500">Memuat data pengguna...</p>'}</div>`;
   if(u.role==='Jamaah'&&window.T2)return head+'<div id="jamaahBody" class="mt-4"></div>';
+  if((u.role==='Team Leader'||u.role==='Muthawwif')&&window.T3)return head+'<div id="stafBody" class="mt-4"></div>';
   const steps=u.role==='Jamaah'?`<ol class="mt-4 space-y-2 text-sm">${['Isi formulir pendaftaran','Unggah KTP dan KK','Bayar DP atau lunas','Unggah paspor dan vaksin','Checklist Nusuk','Info kamar hotel'].map(t=>`<li class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-400"><span>🔒</span>${t}</li>`).join('')}</ol>`:'';
   return head+`<section class="mt-4 bg-white rounded-2xl border border-slate-200 p-5"><h3 class="font-bold text-navy">Sedang disiapkan</h3><p class="text-sm text-slate-600 mt-1">${ROLE_INFO[u.role]||''}</p>${steps}</section>`;
 }
@@ -238,6 +240,7 @@ applyCfg();render();
 api('getPengaturan').then(j=>{if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg();if(S.view==='dash'&&S.user&&S.user.role==='Admin'&&S.tab==='cfg')render()}});
 if(S.token)api('me').then(j=>{if(j.success){S.user=j.user;localStorage.setItem('lb_user',JSON.stringify(j.user));renderHeader()}});
 </script>
+<script src="tahap3a.js"></script>
 <script src="tahap2b.js"></script>
 <script src="tahap2.js"></script>
 </body>
