@@ -240,6 +240,7 @@ applyCfg();render();
 api('getPengaturan').then(j=>{if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg();if(S.view==='dash'&&S.user&&S.user.role==='Admin'&&S.tab==='cfg')render()}});
 if(S.token)api('me').then(j=>{if(j.success){S.user=j.user;localStorage.setItem('lb_user',JSON.stringify(j.user));renderHeader()}});
 </script>
+<script src="tahap3c.js"></script>
 <script src="tahap3b.js"></script>
 <script src="tahap3a.js"></script>
 <script src="tahap2b.js"></script>
