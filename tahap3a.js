@@ -31,6 +31,8 @@ function buka(id){
   <div class="grid gap-2 mt-4"><button onclick="T3.anggota('${id}')" class="btn bg-navy text-white">Atur anggota (${r.anggota.length})</button>
   <button onclick="T3.kamarModal('${id}')" class="btn bg-gold text-navy-dark">Kamar hotel (${r.kamar.length})</button>
   <button onclick="T3B.pengumuman('${id}')" class="btn bg-slate-200">Pengumuman dan tanda baca</button>
+  <button onclick="T3C.nusuk('${id}')" class="btn bg-slate-200">Checklist Nusuk</button>
+  <button onclick="T3C.absen('${id}')" class="btn bg-slate-200">Absensi</button>
   <button onclick="T3.form('${id}')" class="btn bg-slate-200">Ubah data rombongan</button></div>`)}
 
 function form(id){
@@ -99,7 +101,7 @@ async function staf(){
   drawStaf()}
 const kartuStaf=(r,tl)=>`<section class="bg-white rounded-2xl border border-slate-200 p-5 mb-4"><div class="flex items-start justify-between gap-2"><div><h3 class="font-bold text-navy">${esc(r.nama)}</h3>
   <p class="text-xs text-slate-500">${esc(r.paket)} · berangkat ${esc(r.tgl)} · ${r.anggota.length} jamaah</p></div>
-  ${r.status==='Selesai'?'':`<button onclick="T3B.pengumuman('${r.id}')" class="btn !min-h-0 !py-1.5 bg-navy text-white shrink-0">📣 Pengumuman</button>`}</div>
+  ${r.status==='Selesai'?'':`<div class="flex flex-wrap gap-1 justify-end shrink-0"><button onclick="T3B.pengumuman('${r.id}')" class="btn !min-h-0 !py-1.5 bg-navy text-white">📣 Pengumuman</button><button onclick="T3C.nusuk('${r.id}')" class="btn !min-h-0 !py-1.5 bg-slate-200">🪪 Nusuk</button><button onclick="T3C.absen('${r.id}')" class="btn !min-h-0 !py-1.5 bg-slate-200">✅ Absensi</button></div>`}</div>
   <p class="text-xs mt-1">Team Leader: ${kontak(r.tl)} · Muthawwif: ${kontak(r.mut)}</p>
   <h4 class="font-bold text-sm mt-4 mb-2">Jamaah</h4><div>${r.anggota.map(a=>`<div class="flex items-center justify-between gap-2 text-sm border-b border-slate-100 py-1.5">
    <span>${esc(a.nama)} <span class="text-xs text-slate-400">${esc(a.tipe)}</span></span><span class="flex items-center gap-2">${bdgT(a.tahap)}<a href="${WA(a.hp)}" target="_blank" rel="noopener" class="text-lg" aria-label="WhatsApp ${esc(a.nama)}">💬</a></span></div>`).join('')||'<p class="text-xs text-slate-500">Belum ada anggota. Admin yang menempatkan jamaah ke rombongan.</p>'}</div>
