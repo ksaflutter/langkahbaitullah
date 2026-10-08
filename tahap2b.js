@@ -43,7 +43,8 @@ function dash(s){
    ${dok('Paspor','Unggah paspor',buka?'':kunciLain,`<input id="p_no" class="inp" placeholder="Nomor paspor"><label class="block text-xs font-bold">Berlaku sampai<input id="p_exp" type="date" ${minP?`min="${minP}"`:''} class="inp mt-1"></label>${minP?`<p class="text-[11px] text-slate-500">Paspor harus berlaku minimal sampai ${minP} (6 bulan setelah tanggal berangkat).</p>`:''}`)}
    ${dok('Vaksin','Unggah bukti vaksin meningitis',buka?'':kunciLain)}
    <li class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-400">🔒 Checklist Nusuk dan info kamar hotel (tahap berikutnya)</li>
-  </ol></section>`}
+  </ol></section>`;
+  if(window.T3)T3.jamaah()}
 
 function tipe(sisa){const t=$('b_tipe').value;if(t!=='DP')$('b_jml').value=sisa}
 async function kirim(jenis,btn){await jalankan(btn,async()=>{
