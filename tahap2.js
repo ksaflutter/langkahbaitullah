@@ -34,7 +34,9 @@ async function after(){
     if(S.user.role==='Admin'&&S.tab==='paket'&&$('adminBody'))adminPaket();
     if(S.user.role==='Admin'&&S.tab==='reg'&&$('adminBody')&&window.T2B)T2B.admin();
     if(S.user.role==='Admin'&&S.tab==='rom'&&$('adminBody')&&window.T3)T3.admin();
-    if((S.user.role==='Team Leader'||S.user.role==='Muthawwif')&&$('stafBody')&&window.T3)T3.staf()}}
+    if((S.user.role==='Team Leader'||S.user.role==='Muthawwif')&&$('stafBody')&&window.T3)T3.staf();
+    if(S.user.role==='Admin'&&S.tab==='badal'&&$('adminBody')&&window.T4A)T4A.admin();
+    if(S.user.role==='Pelaksana Badal'&&$('badalBody')&&window.T4A)T4A.pelaksana()}}
 
 async function jamaahDash(){
   const b=$('jamaahBody');b.innerHTML='<p class="text-sm text-slate-500">Memuat...</p>';
@@ -44,7 +46,7 @@ async function jamaahDash(){
   if(s.success&&s.pendaftaran)return window.T2B?T2B.dash(s):($('jamaahBody').innerHTML=statusHtml(s));
   const pend=localStorage.getItem('lb_paket');
   if(pend&&paket.find(p=>p.id===pend))return form(pend);
-  $('jamaahBody').innerHTML=`<h3 class="font-bold text-navy text-lg mb-3">Pilih paket keberangkatan</h3>`+grid()}
+  $('jamaahBody').innerHTML=`<h3 class="font-bold text-navy text-lg mb-3">Pilih paket keberangkatan</h3>`+grid();if(window.T4A)T4A.panel()}
 
 function statusHtml(s){
   const r=s.pendaftaran,p=s.paket;
