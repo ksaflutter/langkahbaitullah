@@ -99,14 +99,15 @@ function daftar(){
   const b=$('adminBody');if(!b||S.tab!=='badal')return;
   const list=[...adm.pesanan].sort((a,c)=>URUT[a.status]-URUT[c.status]);
   b.innerHTML=`<button onclick="T4A.layananAdm()" class="btn bg-slate-200 mb-3">Kelola layanan dan harga</button><div class="space-y-2">
-  ${list.map(o=>`<button onclick="T4A.buka('${o.id}')" class="w-full text-left bg-white border ${URUT[o.status]<=2?'border-amber-400':'border-slate-200'} rounded-xl p-3">
+  ${list.map(o=>`<button onclick="T4A.buka('${o.id}')" class="w-full text-left bg-white border ${URUT[o.status]<=2||(o.status==='Ditugaskan'&&o.adaFoto&&o.adaVideo)?'border-amber-400':'border-slate-200'} rounded-xl p-3">
   <div class="flex justify-between gap-2"><b class="text-sm">${esc(o.layanan)}</b>${bdg(o.status)}</div>
   <p class="text-xs text-slate-500">${esc(o.id)} · ${esc(o.target)} · pemesan ${esc(o.pemesan)} · ${rp(o.harga)}</p>
-  ${o.pelaksana?`<p class="text-xs">Pelaksana: ${esc(o.pelaksana)}</p>`:''}</button>`).join('')||'<p class="text-sm text-slate-500">Belum ada pesanan badal.</p>'}</div>`}
+  ${o.pelaksana?`<p class="text-xs">Pelaksana: ${esc(o.pelaksana)}${o.status==='Ditugaskan'||o.status==='Menunggu Verifikasi Bukti'?` · Foto ${o.adaFoto?'✅':'⬜'} Video ${o.adaVideo?'✅':'⬜'}`:''}</p>`:''}</button>`).join('')||'<p class="text-sm text-slate-500">Belum ada pesanan badal.</p>'}</div>`}
 
 function buka(id){
   const o=adm.pesanan.find(x=>x.id===id);if(!o)return;
   const tugas=['Dibayar','Ditugaskan'].includes(o.status)&&!o.adaFoto&&!o.adaVideo;
+  const siap=o.status==='Menunggu Verifikasi Bukti'||(o.status==='Ditugaskan'&&o.adaFoto&&o.adaVideo);
   modal(`<h3 class="text-lg font-extrabold text-navy pr-8">${esc(o.layanan)}</h3><div class="flex gap-2 items-center mt-1">${bdg(o.status)}<span class="text-xs text-slate-500">${esc(o.id)}</span></div>
   <p class="text-sm mt-3">Atas nama: <b>${esc(o.target)}</b></p><p class="text-xs text-slate-500">Pemesan: ${esc(o.pemesan)} · ${esc(o.noWa)} · ${rp(o.harga)}</p>
   ${o.pelaksana?`<p class="text-xs text-slate-500">Pelaksana: ${esc(o.pelaksana)}</p>`:''}${o.catatan?`<p class="text-xs text-rose-600 mt-1">Catatan: ${esc(o.catatan)}</p>`:''}
@@ -115,7 +116,8 @@ function buka(id){
    <button onclick="T4A.verifBayar('${o.id}',true)" class="btn bg-emerald-600 text-white">Verifikasi pembayaran</button><button onclick="T4A.verifBayar('${o.id}',false)" class="btn bg-rose-600 text-white">Tolak pembayaran</button>`:''}
   ${tugas?`<label class="block text-xs font-bold">Tugaskan pelaksana<select id="ad_p" class="inp mt-1"><option value="">Pilih pelaksana</option>${adm.pelaksana.map(p=>`<option value="${esc(p.id)}" ${p.id===o.pelaksanaId?'selected':''}>${esc(p.nama)}</option>`).join('')}</select></label>
    <button onclick="T4A.tugaskan('${o.id}',this)" class="btn bg-navy text-white">Tugaskan</button>${adm.pelaksana.length?'':'<p class="text-xs text-slate-500">Belum ada akun Pelaksana Badal yang disetujui.</p>'}`:''}
-  ${o.status==='Menunggu Verifikasi Bukti'?`<button onclick="T4A.lihat('${o.id}','foto')" class="btn bg-slate-200">Lihat foto bukti</button><button onclick="T4A.lihat('${o.id}','video')" class="btn bg-slate-200">Buka video bukti</button>
+  ${o.status==='Ditugaskan'&&!siap?`<p class="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-3">Menunggu pelaksana. Foto: ${o.adaFoto?'✅ sudah':'⬜ belum'} · Video: ${o.adaVideo?'✅ sudah':'⬜ belum'}. Tombol persetujuan muncul setelah keduanya lengkap.</p>`:''}
+  ${siap?`<button onclick="T4A.lihat('${o.id}','foto')" class="btn bg-slate-200">Lihat foto bukti</button><button onclick="T4A.lihat('${o.id}','video')" class="btn bg-slate-200">Buka video bukti</button>
    <button onclick="T4A.verifBukti('${o.id}',true)" class="btn bg-emerald-600 text-white">Setujui dan selesaikan</button><button onclick="T4A.verifBukti('${o.id}',false)" class="btn bg-rose-600 text-white">Tolak bukti</button>`:''}
   ${o.status==='Selesai'?`<button onclick="T4A.sertifikat('${o.id}','a')" class="btn bg-gold text-navy-dark">📜 Lihat e-sertifikat</button><button onclick="T4A.lihat('${o.id}','foto')" class="btn bg-slate-200">Lihat foto bukti</button><button onclick="T4A.lihat('${o.id}','video')" class="btn bg-slate-200">Buka video bukti</button>`:''}
   </div>`)}
