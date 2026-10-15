@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1E3A8A">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Langkah Baitullah">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Langkah Baitullah</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -262,11 +267,19 @@ applyCfg();render();
 api('getPengaturan').then(j=>{if(j.success){S.cfg=j.pengaturan;localStorage.setItem('lb_cfg',JSON.stringify(S.cfg));applyCfg();if(S.view==='dash'&&S.user&&S.user.role==='Admin'&&S.tab==='cfg')render()}});
 if(S.token)api('me').then(j=>{if(j.success){S.user=j.user;localStorage.setItem('lb_user',JSON.stringify(j.user));renderHeader()}});
 </script>
-<script src="tahap4a.js?v=20261015b"></script>
-<script src="tahap3c.js?v=20261015b"></script>
-<script src="tahap3b.js?v=20261015b"></script>
-<script src="tahap3a.js?v=20261015b"></script>
-<script src="tahap2b.js?v=20261015b"></script>
-<script src="tahap2.js?v=20261015b"></script>
+<script src="tahap4a.js?v=20261015c"></script>
+<script src="tahap3c.js?v=20261015c"></script>
+<script src="tahap3b.js?v=20261015c"></script>
+<script src="tahap3a.js?v=20261015c"></script>
+<script src="tahap2b.js?v=20261015c"></script>
+<script src="tahap2.js?v=20261015c"></script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+(function(){var ev=null,b=document.createElement('button');b.id='btnPasang';b.textContent='\uD83D\uDCF2 Pasang aplikasi';
+b.style.cssText='display:none;position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:60;background:#D4AF37;color:#0F1F4D;font-weight:700;font-size:13px;padding:10px 14px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,.25)';
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();ev=e;document.body.appendChild(b);b.style.display='block'});
+b.onclick=function(){if(!ev)return;ev.prompt();ev.userChoice.finally(function(){ev=null;b.style.display='none'})};
+window.addEventListener('appinstalled',function(){b.style.display='none'});})();
+</script>
 </body>
 </html>
