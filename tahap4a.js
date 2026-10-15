@@ -67,16 +67,28 @@ function gambarTugas(j){
   <div class="flex justify-between gap-2"><h3 class="font-bold text-navy">${esc(o.layanan)}</h3>${bdg(o.status)}</div>
   <p class="text-sm mt-1">Atas nama: <b>${esc(o.target)}</b></p><p class="text-xs text-slate-500">${esc(o.id)} · pemesan ${esc(o.pemesan)}</p>
   ${o.catatan?`<p class="text-xs text-rose-600 mt-2">Ditolak admin: ${esc(o.catatan)}. Silakan unggah ulang.</p>`:''}
-  ${o.status==='Ditugaskan'?`<div class="mt-3 space-y-4">
-   <div><p class="text-sm font-bold">${ck(o.adaFoto)} Bukti foto</p><input type="file" accept="image/*" id="tf_${o.id}" class="inp mt-1"><button onclick="T4A.unggah('${o.id}','foto',this)" class="btn bg-navy text-white w-full mt-2">Unggah foto</button></div>
-   <div><p class="text-sm font-bold">${ck(o.adaVideo)} Bukti video</p><input type="file" accept="video/*" id="tv_${o.id}" class="inp mt-1"><p class="text-[11px] text-slate-500 mt-1">Maksimal ${j.maxVideoMB} MB. Rekam singkat (sekitar 30 detik, kualitas 720p).</p>
-    <button onclick="T4A.unggah('${o.id}','video',this)" class="btn bg-navy text-white w-full mt-2">Unggah video</button>
-    <p class="text-xs text-slate-500 mt-3">Video terlalu besar? Unggah ke Google Drive atau YouTube (tidak publik), lalu tempel linknya:</p>
-    <input id="tl_${o.id}" class="inp mt-1" placeholder="https://..."><button onclick="T4A.unggah('${o.id}','link',this)" class="btn bg-slate-200 w-full mt-2">Simpan link video</button></div></div>`:''}
+  ${o.status==='Ditugaskan'?`<div class="mt-3 space-y-3">
+   <div class="rounded-xl border ${o.adaFoto?'border-emerald-300 bg-emerald-50':'border-slate-200'} p-3">
+    <p class="text-sm font-bold">1. Bukti foto ${o.adaFoto?'<span class="text-emerald-700">✅ sudah tersimpan</span>':'<span class="text-slate-500">⬜ belum</span>'}</p>
+    <input type="file" accept="image/*" id="tf_${o.id}" class="inp mt-2"><button onclick="T4A.unggah('${o.id}','foto',this)" class="btn bg-navy text-white w-full mt-2">${o.adaFoto?'Ganti foto':'Simpan foto'}</button>
+    <p id="hs_${o.id}_foto" class="text-xs mt-2 hidden"></p></div>
+   <div class="rounded-xl border ${o.adaVideo?'border-emerald-300 bg-emerald-50':'border-slate-200'} p-3">
+    <p class="text-sm font-bold">2. Bukti video ${o.adaVideo?'<span class="text-emerald-700">✅ sudah tersimpan</span>':'<span class="text-slate-500">⬜ belum</span>'}</p>
+    <p class="text-[11px] text-slate-500 mt-1">Pilih salah satu cara. Dua cara ini terpisah dan tidak saling membutuhkan.</p>
+    <p class="text-xs font-bold mt-2">Cara A: unggah file video (maksimal ${j.maxVideoMB} MB)</p>
+    <input type="file" accept="video/*" id="tv_${o.id}" class="inp mt-1"><button onclick="T4A.unggah('${o.id}','video',this)" class="btn bg-navy text-white w-full mt-2">Simpan file video</button>
+    <p id="hs_${o.id}_video" class="text-xs mt-2 hidden"></p>
+    <p class="text-xs font-bold mt-4">Cara B: tempel link video (jika file terlalu besar)</p>
+    <input id="tl_${o.id}" class="inp mt-1" placeholder="https://..."><button onclick="T4A.unggah('${o.id}','link',this)" class="btn bg-slate-200 w-full mt-2">Simpan link video</button>
+    <p id="hs_${o.id}_link" class="text-xs mt-2 hidden"></p></div></div>`:''}
   ${o.status==='Menunggu Verifikasi Bukti'?'<p class="text-sm text-amber-700 mt-3">Foto dan video lengkap. Menunggu verifikasi admin.</p>':''}
   ${o.status==='Selesai'?'<p class="text-sm text-emerald-700 mt-3">✅ Selesai dan telah diverifikasi.</p>':''}</section>`).join('')
   ||'<p class="text-sm text-slate-500 bg-white rounded-2xl border border-slate-200 p-5">Belum ada tugas badal untuk Anda. Admin akan menugaskan setelah pembayaran pemesan diverifikasi.</p>'}
-async function unggah(id,jenis,btn){await jalan(btn,async()=>{
+function hs(id,jenis,teks,ok){const e=$('hs_'+id+'_'+jenis);if(!e)return;e.textContent=teks;e.className='text-xs mt-2 font-bold '+(ok?'text-emerald-700':'text-rose-600')}
+async function unggah(id,jenis,btn){
+  hs(id,jenis,'',true);
+  try{await unggah2(id,jenis,btn)}catch(e){hs(id,jenis,'Gagal: '+e.message,false);toast(e.message,false)}}
+async function unggah2(id,jenis,btn){await busy(btn,async()=>{
   let data={id,jenis};
   if(jenis==='foto'){data.base64=await foto('tf_'+id);data.mimeType='image/jpeg'}
   else if(jenis==='video'){
@@ -85,7 +97,8 @@ async function unggah(id,jenis,btn){await jalan(btn,async()=>{
   else{data.link=$('tl_'+id).value.trim();if(!data.link)throw new Error('Tempel link video terlebih dahulu.')}
   toast(jenis==='video'?'Mengunggah video, bisa beberapa menit. Jangan tutup halaman...':'Mengunggah...');
   const j=await api('badalUploadBukti',data);
-  toast(j.message,j.success);if(j.success)gambarTugas(j)})}
+  if(!j.success){hs(id,jenis,'Gagal: '+j.message,false);toast(j.message,false);return}
+  toast(j.message,true);gambarTugas(j);hs(id,jenis,'Tersimpan.',true)})}
 
 // ===== ADMIN =====
 const URUT={'Menunggu Verifikasi Bayar':0,'Menunggu Verifikasi Bukti':1,'Dibayar':2,'Ditugaskan':3,'Menunggu Pembayaran':4,'Selesai':5};
