@@ -174,13 +174,13 @@ function dashHtml(){
     <p class="text-xs text-slate-300 mt-1">${esc(u.role)} · ${esc(u.noWa)}</p></section>`;
   if(u.role==='Admin')return head+`
   <div class="mt-4 flex flex-wrap gap-2" role="tablist">
-    <button onclick="S.tab='users';render()" class="btn ${S.tab==='users'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengguna</button>
+    <button onclick="S.tab='users';render()" class="btn ${S.tab==='users'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengguna<span id="pendBadge" class="${S.pend?'':'hidden'} ml-1.5 inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-rose-600 text-white text-[11px] font-bold">${S.pend||0}</span></button>
     <button onclick="S.tab='badal';render()" class="btn ${S.tab==='badal'?'bg-navy text-white':'bg-white border border-slate-300'}">Badal</button>
     <button onclick="S.tab='rom';render()" class="btn ${S.tab==='rom'?'bg-navy text-white':'bg-white border border-slate-300'}">Rombongan</button>
     <button onclick="S.tab='reg';render()" class="btn ${S.tab==='reg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pendaftar</button>
     <button onclick="S.tab='paket';render()" class="btn ${S.tab==='paket'?'bg-navy text-white':'bg-white border border-slate-300'}">Paket</button>
     <button onclick="S.tab='cfg';render()" class="btn ${S.tab==='cfg'?'bg-navy text-white':'bg-white border border-slate-300'}">Pengaturan dan logo</button>
-  </div><div id="adminBody" class="mt-4">${S.tab==='cfg'?cfgHtml():'<p class="text-sm text-slate-500">Memuat data pengguna...</p>'}</div>`;
+  </div><button id="pendBanner" onclick="S.tab='users';render()" class="${S.pend&&S.tab!=='users'?'':'hidden'} mt-3 w-full text-left rounded-xl bg-amber-50 border border-amber-300 text-amber-800 text-sm font-bold p-3">🔔 ${S.pend||0} akun menunggu persetujuan. Ketuk untuk meninjau.</button><div id="adminBody" class="mt-4">${S.tab==='cfg'?cfgHtml():'<p class="text-sm text-slate-500">Memuat data pengguna...</p>'}</div>`;
   if(u.role==='Jamaah'&&window.T2)return head+'<div id="jamaahBody" class="mt-4"></div>';
   if((u.role==='Team Leader'||u.role==='Muthawwif')&&window.T3)return head+'<div id="stafBody" class="mt-4"></div>';
   if(u.role==='Pelaksana Badal'&&window.T4A)return head+'<div id="badalBody" class="mt-4"></div>';
@@ -189,11 +189,27 @@ function dashHtml(){
 }
 
 // ====== ADMIN ======
+function setPend(n){
+  S.pend=n;
+  const b=$('pendBadge');if(b){b.textContent=n;b.classList.toggle('hidden',!n)}
+  const m=$('pendBanner');if(m){m.textContent='🔔 '+n+' akun menunggu persetujuan. Ketuk untuk meninjau.';m.classList.toggle('hidden',!(n&&S.tab!=='users'))}
+}
+async function cekPending(){
+  if(!S.user||S.user.role!=='Admin'||document.hidden)return;
+  const j=await api('adminDaftarUser');
+  if(!j.success)return;
+  S.users=j.users;
+  const n=j.users.filter(u=>u.status==='Menunggu').length;
+  if(n>(S.pend||0))toast('Ada '+(n-(S.pend||0))+' akun baru menunggu persetujuan.');
+  setPend(n);
+  if(S.tab==='users')renderUsers();
+}
+setInterval(cekPending,45000);
 async function loadAdmin(){
-  if(S.tab!=='users')return;
+  if(S.tab!=='users'){if(S.pend===undefined)cekPending();return}
   const j=await api('adminDaftarUser');
   if(!j.success){if($('adminBody'))$('adminBody').innerHTML=`<p class="text-sm text-rose-600">${esc(j.message)}</p>`;return}
-  S.users=j.users;renderUsers();
+  S.users=j.users;setPend(j.users.filter(u=>u.status==='Menunggu').length);renderUsers();
 }
 function renderUsers(){
   const el=$('adminBody');if(!el||S.tab!=='users')return;
